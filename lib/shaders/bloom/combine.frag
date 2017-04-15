@@ -165,7 +165,11 @@ vec2 kaleidoscope (vec2 uv, float n) {
   uv = vec2(cos(angle), sin(angle)) * radius;
   uv.x /= aspect;
   uv.x *= skew * 1.0;
-  uv *= mix(1.25, 1.5, animation);
+  #ifdef IS_PORTRAIT
+    uv *= mix(1.0, 1.5, animation);
+  #else
+    uv *= mix(1.25, 1.5, animation);
+  #endif
   uv = uv * 0.5 + 0.5;
   return uv;
 }
