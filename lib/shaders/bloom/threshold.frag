@@ -12,11 +12,17 @@ uniform float vignetteScale;
 
 #pragma glslify: rgbmToLinear = require('../rgbm-to-linear');
 #pragma glslify: linearToRgbm = require('../linear-to-rgbm');
+#pragma glslify: decodeFloat = require('../decode-float');
+#pragma glslify: encodeFloat = require('../encode-float');
 #pragma glslify: vignette = require('./vignette');
 #pragma glslify: luma = require('glsl-luma');
 
 void main () {
   vec4 outColor = texture2D(tDiffuse, vUv);
+  #ifndef FLOAT_BUFFER
+    outColor = vec4(vec3(decodeFloat(outColor)), 1.0);
+  #endif
+  
   // bool above = outColor.r > lumaThreshold || outColor.g > outColor || outColor.b > outColor;
   // outColor.rgb = step(vec3(lumaThreshold), gl_FragColor.rgb);
   // gl_FragColor = above ? outColor : vec4(vec3(0.0), 1.0);
@@ -31,6 +37,9 @@ void main () {
   gl_FragColor.r = luma(gl_FragColor.rgb);
 
   gl_FragColor.a = outColor.a;
+  #ifndef FLOAT_BUFFER
+    gl_FragColor = encodeFloat(outColor.r);
+  #endif
   // vec4 encoded = texture2D(tDiffuse, vUv);
   // vec4 outColor = rgbmToLinear(encoded);
   // vec4 finalColor = vec4(step(vec3(lumaThreshold), outColor.rgb), 1.0);

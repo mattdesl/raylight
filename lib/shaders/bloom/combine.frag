@@ -53,6 +53,8 @@ uniform float bloomOpacity;
 #pragma glslify: screen = require('glsl-blend/screen');
 #pragma glslify: backgroundUV = require('../glsl-background');
 #pragma glslify: rgbmToLinear = require('../rgbm-to-linear');
+#pragma glslify: decodeFloat = require('../decode-float');
+#pragma glslify: encodeFloat = require('../encode-float');
 
 #pragma glslify: blendScreen = require(glsl-blend/screen)
 
@@ -103,7 +105,12 @@ float smootherstep(float edge0, float edge1, float x) {
 }
 
 vec4 sample (sampler2D map, vec2 uv) {
-  return texture2D(map, uv).rrra;
+  #ifndef FLOAT_BUFFER
+    float f = decodeFloat(texture2D(map, uv));
+    return vec4(f, f, f, 1.0);
+  #else
+    return texture2D(map, uv).rrra;
+  #endif
 }
 
 vec3 applyLensDistort (sampler2D map, vec2 uv, float distort, float k, float kCube, float scale) {
@@ -222,8 +229,7 @@ void main () {
  
   gl_FragColor.rgb = mix(vec3(color1), vec3(color2), L);
   L = luma(gl_FragColor.rgb);
-  gl_FragColor.rgb += deband * 40.0 * smoothstep(0.0, 0.5, L);
-  // gl_FragColor.rgb = OptimizedCineonToneMapping(gl_FragColor.rgb);
+  gl_FragColor.rgb += deband * 20.0 * smoothstep(0.0, 0.5, L);
  
   #if defined(DUST_OVERLAY) && !defined(IS_MOBILE)
     vec2 bgUV = backgroundUV(vUv, resolution, dustMapResolution);
@@ -241,6 +247,12 @@ void main () {
   // vigUV.x *= resolution.x / resolution.y;
   // float vigDist = length(vigUV);
   // gl_FragColor.rgb = vec3(smoothstep(vignetteMin, vignetteMax, vigDist));
+ 
+ 
+  // #ifndef FLOAT_BUFFER
+  //   float test = decodeFloat(texture2D(tBloomDiffuse, vUv));
+  //   gl_FragColor = vec4(vec3(test), 1.0);
+  // #endif
  
   #ifdef GAMMA_OUTPUT
     // gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1.0 / GAMMA_OUTPUT));

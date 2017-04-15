@@ -23,6 +23,7 @@ uniform float emissiveFactor;
 #include <clipping_planes_pars_fragment>
 
 #pragma glslify: encodeRGBM = require('./linear-to-rgbm.glsl');
+#pragma glslify: encodeFloat = require('./encode-float.glsl');
 
 void main() {
 
@@ -66,5 +67,9 @@ void main() {
   #include <tonemapping_fragment>
   #include <encodings_fragment>
   #include <fog_fragment>
+  #ifndef FLOAT_BUFFER
+    // gl_FragColor.rgba = encodeFloat(16.0);
+    gl_FragColor.rgba = encodeFloat(gl_FragColor.r);
+  #endif
   // gl_FragColor = encodeRGBM(gl_FragColor);
 }

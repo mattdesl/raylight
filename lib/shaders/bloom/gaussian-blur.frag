@@ -14,9 +14,15 @@ uniform float vignetteScale;
 #pragma glslify: rgbmToLinear = require('../rgbm-to-linear');
 #pragma glslify: linearToRgbm = require('../linear-to-rgbm');
 #pragma glslify: vignette = require('./vignette');
+#pragma glslify: decodeFloat = require('../decode-float');
+#pragma glslify: encodeFloat = require('../encode-float');
 
 float sample (sampler2D image, vec2 uv) {
-  return texture2D(image, uv).r;
+  #ifndef FLOAT_BUFFER
+    return decodeFloat(texture2D(image, uv));
+  #else
+    return texture2D(image, uv).r;
+  #endif
 }
 
 float blur(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
@@ -41,5 +47,9 @@ void main () {
   float finalColor = blur(tDiffuse, vUv, resolution.xy, direction * edgeBlur);
   gl_FragColor.rgb = vec3(finalColor);
   gl_FragColor.a = 1.0;
+  #ifndef FLOAT_BUFFER
+    // finalColor = decodeFloat(texture2D(tDiffuse, vUv));
+    gl_FragColor = encodeFloat(finalColor);
+  #endif
   // gl_FragColor = texture2D(tDiffuse, vUv);
 }

@@ -51,6 +51,7 @@ varying vec3 vFogWorldPosition;
 #include <clipping_planes_pars_fragment>
 
 #pragma glslify: encodeRGBM = require('./linear-to-rgbm.glsl');
+#pragma glslify: encodeFloat = require('./encode-float.glsl');
 
 float udBox( vec3 p, vec3 b )
 {
@@ -127,5 +128,7 @@ void main() {
   #include <tonemapping_fragment>
   #include <encodings_fragment>
   #include <fog_fragment>
-  // gl_FragColor = encodeRGBM(gl_FragColor);
+  #ifndef FLOAT_BUFFER
+    gl_FragColor.rgba = encodeFloat(gl_FragColor.r);
+  #endif
 }

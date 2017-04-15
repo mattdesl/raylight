@@ -50,7 +50,7 @@ function start (audio) {
   });
 
   // const background = '#f2f2f2';
-  const background = '#0b0214';
+  const background = 'black';
   document.body.style.background = background;
   app.renderer.setClearColor(background, 1);
   app.renderer.gammaOutput = false;
