@@ -208,3 +208,4 @@ function start (audio) {
     }).on('update', update);
   }
 }
+console.log(window.innerWidth, window.innerHeight)

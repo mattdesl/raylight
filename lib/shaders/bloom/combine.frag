@@ -142,51 +142,102 @@ vec3 applyLensDistort (sampler2D map, vec2 uv, float distort, float k, float kCu
 }
 
 vec2 kaleidoscope (vec2 uv, float n) {
-  // float angleStep = PI / 8.0;
-  // vec2 cUv = uv - 0.5;
-  // cUv.x *= resolution.x / resolution.y;
+  float aspect = resolution.x / resolution.y;
+  float angleStep = (PI * 2.0) / 3.0;
 
-  // float angle = atan(cUv.y, cUv.x);
+  vec2 cUv = uv;
+  cUv -= 0.5;
+  cUv.x *= aspect;
+
+  float angle = atan(cUv.y, cUv.x);
   // angle = abs(mod(angle, angleStep * 2.0) - angleStep);
-  // angle -= time * 0.2;
+  angle += PI / 2.0;
+  angle = mod(angle, angleStep) / angleStep;
+  angle = 1.0 - abs(angle * 2.0 - 1.0) * 0.5 + 0.5;
+  angle *= angleStep;
 
-  // float radius = length(cUv);
-  // uv.x = (radius * cos(angle)) + 0.5;
-  // uv.y = (radius * sin(angle)) + 0.5;
-  
-  float len = 0.5;
-  uv.x = len - abs(uv.x - len);
-  uv.y = 1.0 - (len - abs(uv.y - len));
+  float radius = length(cUv);
+
+  uv = vec2(cos(angle), sin(angle)) * radius;
+  // uv.x /= aspect;
+  uv *= 1.5;
+  uv = uv * 0.5 + 0.5;
   return uv;
 }
 
 vec2 kaleidoscope2 (vec2 uv, float n) {
-  uv.x *= resolution.x / resolution.y;
+  float angleStep = PI / 3.0;
+  vec2 targetResolution = vec2(911.0, 502.0);
+  // uv = backgroundUV(uv, resolution, targetResolution);
+
+  vec2 cUv = uv;
+  float aspect = resolution.x / resolution.y;
+  cUv -= 0.5;
+  cUv.x *= aspect;
+
+  float angle = atan(cUv.y, cUv.x);
+  angle += time * 0.0;
+  angle = abs(mod(angle, angleStep * 2.0) - angleStep);
+  // angle += PI / 2.0;
+  
+  // angle -= time * 0.2;
+
+  float radius = length(cUv);
+  // uv.x = (radius * cos(angle)) + 0.5;
+  // uv.y = (radius * sin(angle)) + 0.5;
+  uv = vec2(cos(angle), sin(angle)) * radius;
+  uv.x /= aspect;
+  uv *= 2.0;
+  uv = uv * 0.5 + 0.5;
+  // float len = 0.5;
+  // uv.x = len - abs(uv.x - len);
+  // uv.y = 1.0 - (len - abs(uv.y - len));
+  return uv;
+}
+
+vec2 kaleidoscope3 (vec2 uv, float n) {
+  vec2 targetResolution = vec2(911.0, 502.0);
+  float aspect = resolution.x / resolution.y;
+  uv = uv * 2.0 - 1.0;
+
+  float kScale = 1.0;
+
+  // uv.x *= resolution.x / resolution.y;
   float repeatAngle = PI / floor(n);
 
+  uv.x *= aspect;
   float r = length(uv);
   float originalAngle = atan(uv.y, uv.x);
   float a = originalAngle / repeatAngle;
-  a += time * 0.0 + PI / 2.0;
+  a += time * -0.025 + PI / 2.0;
   a += PI / 2.0;
   a = mix(fract(a), 1.0 - fract(a), mod(floor(a), 2.0)) * repeatAngle;
-  return vec2(cos(a), sin(a)) * r;
+  vec2 newUV = (vec2(cos(a), sin(a)) * r);
+  newUV.x /= aspect;
+  // #ifdef IS_PORTRAIT
+  //   newUV *= 1.0;
+  // #else
+    newUV *= kScale;
+  // #endif
+  newUV = newUV * 0.5 + 0.5;
+  return newUV;
 }
 
 void main () {
-  vec2 texCoord = vUv;
-  // float anim = sin(time) * 0.5 + 0.5;
-  vec2 modUV = kaleidoscope2(texCoord * 2.0 - 1.0, 3.0);
-  #ifdef IS_PORTRAIT
-    modUV *= 1.0;
-  #else
-    modUV *= 0.85;
+  
+  #ifdef VIGNETTE
+  float v = vignette(vUv, resolution, vignetteMin, vignetteMax, vignetteScale);
   #endif
-  modUV.x /= resolution.x / resolution.y;
-  modUV = modUV * 0.5 + 0.5;
+  
+  vec2 texCoord = vUv;
+  // texCoord = backgroundUV(texCoord, resolution, vec2(911.0, 502.0));
+  // float anim = sin(time) * 0.5 + 0.5;
+  vec2 modUV = kaleidoscope(texCoord, 3.0);
+  // vec2 modUV = kaleidoscope2(texCoord * 2.0 - 1.0, 3.0);
+  
   // texCoord = modUV;
   texCoord = modUV;
-  // texCoord = mix(texCoord, modUV, anim);
+  // texCoord = mix(modUV, texCoord, v);
 
   #ifdef LENS_DISTORT
     vec3 distortRGB = applyLensDistort(tDiffuse, texCoord, lensDistort, lensDistortK, lensDistortCubicK, lensDistortScale);
@@ -208,7 +259,6 @@ void main () {
   gl_FragColor.a = 1.0;
 
   #ifdef VIGNETTE
-  float v = vignette(vUv, resolution, vignetteMin, vignetteMax, vignetteScale);
   gl_FragColor.rgb = mix(gl_FragColor.rgb, foreground.rgb, v);
   #endif
 
