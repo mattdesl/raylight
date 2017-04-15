@@ -19,6 +19,7 @@ uniform sampler2D dustMap;
 uniform sampler2D lookupMap;
 uniform float time;
 uniform float steps;
+uniform float animation;
 
 #ifdef LENS_DISTORT
 uniform float lensDistort;
@@ -143,24 +144,28 @@ vec3 applyLensDistort (sampler2D map, vec2 uv, float distort, float k, float kCu
 
 vec2 kaleidoscope (vec2 uv, float n) {
   float aspect = resolution.x / resolution.y;
-  float angleStep = (PI * 2.0) / 3.0;
+  float skew = 2.0;
+  float angleStep = (PI * 2.0) / n;
 
   vec2 cUv = uv;
   cUv -= 0.5;
   cUv.x *= aspect;
+  cUv.x *= skew * 0.5;
 
   float angle = atan(cUv.y, cUv.x);
   // angle = abs(mod(angle, angleStep * 2.0) - angleStep);
-  angle += PI / 2.0;
+  angle += -PI / 2.0 + time * -0.025;
   angle = mod(angle, angleStep) / angleStep;
   angle = 1.0 - abs(angle * 2.0 - 1.0) * 0.5 + 0.5;
+  angle = mix(angle, angle + 0.2, animation);
   angle *= angleStep;
 
   float radius = length(cUv);
 
   uv = vec2(cos(angle), sin(angle)) * radius;
-  // uv.x /= aspect;
-  uv *= 1.5;
+  uv.x /= aspect;
+  uv.x *= skew * 1.0;
+  uv *= mix(1.25, 1.5, animation);
   uv = uv * 0.5 + 0.5;
   return uv;
 }
@@ -198,6 +203,7 @@ vec2 kaleidoscope2 (vec2 uv, float n) {
 vec2 kaleidoscope3 (vec2 uv, float n) {
   vec2 targetResolution = vec2(911.0, 502.0);
   float aspect = resolution.x / resolution.y;
+  float targetAspect = targetResolution.x / targetResolution.y;
   uv = uv * 2.0 - 1.0;
 
   float kScale = 1.0;
@@ -206,6 +212,7 @@ vec2 kaleidoscope3 (vec2 uv, float n) {
   float repeatAngle = PI / floor(n);
 
   uv.x *= aspect;
+  uv.x *= targetAspect * 0.5;
   float r = length(uv);
   float originalAngle = atan(uv.y, uv.x);
   float a = originalAngle / repeatAngle;
@@ -214,6 +221,7 @@ vec2 kaleidoscope3 (vec2 uv, float n) {
   a = mix(fract(a), 1.0 - fract(a), mod(floor(a), 2.0)) * repeatAngle;
   vec2 newUV = (vec2(cos(a), sin(a)) * r);
   newUV.x /= aspect;
+  newUV.x *= targetAspect * 1.0;
   // #ifdef IS_PORTRAIT
   //   newUV *= 1.0;
   // #else
@@ -255,6 +263,8 @@ void main () {
 
   // gl_FragColor = foreground;
   gl_FragColor.rgb = background.rgb + foreground.rgb * bloomOpacity;
+  // gl_FragColor.rgb = mix(gl_FragColor.rgb, background.rgb * 0.5 + foreground.rgb, animation);
+  
   // gl_FragColor.rgb = blendScreen(background.rgb, foreground.rgb);
   gl_FragColor.a = 1.0;
 
@@ -287,11 +297,12 @@ void main () {
     // vec3 colorWithDust = gl_FragColor.rgb + dustOverlay.r;
     vec3 colorWithDust = screen(gl_FragColor.rgb, vec3(dustOverlay.r));
     float dustFactor = smoothstep(0.0, 0.3, luma(foreground.rgb));
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor * 0.75);
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor * 1.0);
   #endif
 
   #if defined(USE_LUT) && !defined(IS_MOBILE)
     gl_FragColor.rgb = mix(gl_FragColor.rgb, lut(gl_FragColor, lookupMap).rgb, 0.5);
+    // gl_FragColor.rgb = mix(gl_FragColor.rgb, effected, animation);
   #endif
 
   #ifdef FLOAT_BUFFER

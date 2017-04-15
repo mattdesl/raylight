@@ -74,16 +74,23 @@ function start (audio) {
     document.body.classList.remove('grab');
     document.body.classList.add('grabbing');
     animateOutContent();
-    tunnelTimeline.cancel().to(tunnel, {
-      moveSpeed: 1,
-      ease: 'quadInOut',
-      duration: 1
+    tunnelTimeline.cancel();
+    tunnelTimeline.to(app.getBloom(), {
+      animation: 1,
+      ease: 'quintOut',
+      duration: 0.5
+    });
+    tunnelTimeline.to(tunnel, {
+      ease: 'expoOut',
+      animation: 1,
+      moveSpeed: 0.5,
+      duration: 0.5
     });
     if (audio) {
       audioTimeline.cancel().to(audio, {
         effect: 1,
-        duration: 0.5,
-        ease: 'expoOut'
+        duration: 1,
+        ease: 'quadOut'
       });
     }
   };
@@ -95,10 +102,17 @@ function start (audio) {
     ev.preventDefault();
     document.body.classList.remove('grabbing');
     document.body.classList.add('grab');
-    tunnelTimeline.cancel().to(tunnel, {
-      // moveSpeed: 0.5,
-      ease: 'quadInOut',
-      duration: 2
+    tunnelTimeline.cancel();
+    tunnelTimeline.to(app.getBloom(), {
+      animation: 0,
+      ease: 'quintOut',
+      duration: 0.5
+    });
+    tunnelTimeline.to(tunnel, {
+      ease: 'expoOut',
+      animation: 0,
+      moveSpeed: 1,
+      duration: 0.5
     });
     if (audio) {
       audioTimeline.cancel().to(audio, {
