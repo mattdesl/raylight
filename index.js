@@ -81,7 +81,7 @@ function start (audio) {
     });
     if (audio) {
       audioTimeline.cancel().to(audio, {
-        effect: 0,
+        effect: 1,
         duration: 0.5,
         ease: 'expoOut'
       });
@@ -96,13 +96,13 @@ function start (audio) {
     document.body.classList.remove('grabbing');
     document.body.classList.add('grab');
     tunnelTimeline.cancel().to(tunnel, {
-      moveSpeed: 0.5,
+      // moveSpeed: 0.5,
       ease: 'quadInOut',
       duration: 2
     });
     if (audio) {
       audioTimeline.cancel().to(audio, {
-        effect: 1,
+        effect: 0,
         duration: 1,
         ease: 'quadOut'
       });
@@ -150,15 +150,15 @@ function start (audio) {
 
   // ugly code...
   function animateInContent () {
-    const overlay = document.querySelector('.overlay');
+    // const overlay = document.querySelector('.overlay');
     const header = document.querySelector('.header');
     const subheader = document.querySelector('.subheader');
     const update = () => {
       css(header, { opacity: headerTween.opacity });
       css(subheader, { opacity: subheaderTween.opacity });
-      css(overlay, { opacity: overlayTween.opacity });
+      // css(overlay, { opacity: overlayTween.opacity });
       if (soundcloudDiv) {
-        css(soundcloudDiv, { opacity: subheaderTween.opacity * 0.4 });
+        css(soundcloudDiv, { opacity: subheaderTween.opacity * 1 });
       }
     };
     update();
@@ -180,15 +180,15 @@ function start (audio) {
   }
 
   function animateOutContent () {
-    const overlay = document.querySelector('.overlay');
+    // const overlay = document.querySelector('.overlay');
     const header = document.querySelector('.header');
     const subheader = document.querySelector('.subheader');
     const update = () => {
       css(header, { opacity: headerTween.opacity });
       css(subheader, { opacity: subheaderTween.opacity });
-      css(overlay, { opacity: overlayTween.opacity });
+      // css(overlay, { opacity: overlayTween.opacity });
       if (soundcloudDiv) {
-        css(soundcloudDiv, { opacity: subheaderTween.opacity * 0.4 });
+        css(soundcloudDiv, { opacity: subheaderTween.opacity * 1 });
       }
     };
     update();

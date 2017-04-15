@@ -10,38 +10,29 @@ uniform float vignetteMax;
 uniform float vignetteStrength;
 uniform float vignetteScale;
 
-#pragma glslify: rgbmToLinear = require('../rgbm-to-linear');
-#pragma glslify: linearToRgbm = require('../linear-to-rgbm');
 #pragma glslify: decodeFloat = require('../decode-float');
 #pragma glslify: encodeFloat = require('../encode-float');
 #pragma glslify: vignette = require('./vignette');
 #pragma glslify: luma = require('glsl-luma');
 
 void main () {
-  vec4 outColor = texture2D(tDiffuse, vUv);
-  #ifndef FLOAT_BUFFER
-    outColor = vec4(vec3(decodeFloat(outColor)), 1.0);
-  #endif
   
-  // bool above = outColor.r > lumaThreshold || outColor.g > outColor || outColor.b > outColor;
-  // outColor.rgb = step(vec3(lumaThreshold), gl_FragColor.rgb);
-  // gl_FragColor = above ? outColor : vec4(vec3(0.0), 1.0);
-  float v = vignette(vUv, resolution, vignetteMin, vignetteMax, vignetteScale);
-  vec3 T = vec3(lumaThreshold);
-  gl_FragColor.rgb = step(T, outColor.rgb);
-
-  // allow our edge vignette to peek through
-  gl_FragColor.rgb = mix(gl_FragColor.rgb, min(vec3(3.0), outColor.rgb), v);
-
-  // encode luminance in R channel
-  gl_FragColor.r = luma(gl_FragColor.rgb);
-
-  gl_FragColor.a = outColor.a;
-  #ifndef FLOAT_BUFFER
-    gl_FragColor = encodeFloat(outColor.r);
+  #ifdef FLOAT_BUFFER
+    float color = texture2D(tDiffuse, vUv).r;
+  #else
+    float color = decodeFloat(texture2D(tDiffuse, vUv));
   #endif
-  // vec4 encoded = texture2D(tDiffuse, vUv);
-  // vec4 outColor = rgbmToLinear(encoded);
-  // vec4 finalColor = vec4(step(vec3(lumaThreshold), outColor.rgb), 1.0);
-  // gl_FragColor = linearToRgbm(finalColor);
+
+  // threshold
+  float outColor = step(lumaThreshold, color);
+
+  // allow vignette to peek through
+  float v = vignette(vUv, resolution, vignetteMin, vignetteMax, vignetteScale);
+  outColor = mix(outColor, min(3.0, color), v);
+
+  #ifdef FLOAT_BUFFER
+    gl_FragColor = vec4(vec3(outColor), 1.0);
+  #else
+    gl_FragColor = encodeFloat(outColor);
+  #endif
 }

@@ -11,8 +11,6 @@ uniform float vignetteMax;
 uniform float vignetteStrength;
 uniform float vignetteScale;
 
-#pragma glslify: rgbmToLinear = require('../rgbm-to-linear');
-#pragma glslify: linearToRgbm = require('../linear-to-rgbm');
 #pragma glslify: vignette = require('./vignette');
 #pragma glslify: decodeFloat = require('../decode-float');
 #pragma glslify: encodeFloat = require('../encode-float');
@@ -25,7 +23,28 @@ float sample (sampler2D image, vec2 uv) {
   #endif
 }
 
-float blur(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
+float blur5 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
+  float color = 0.0;
+  vec2 off1 = vec2(1.3333333333333333) * direction;
+  color += sample(image, uv) * 0.29411764705882354;
+  color += sample(image, uv + (off1 / resolution)) * 0.35294117647058826;
+  color += sample(image, uv - (off1 / resolution)) * 0.35294117647058826;
+  return color;
+}
+
+float blur9 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
+  float color = 0.0;
+  vec2 off1 = vec2(1.3846153846) * direction;
+  vec2 off2 = vec2(3.2307692308) * direction;
+  color += sample(image, uv) * 0.2270270270;
+  color += sample(image, uv + (off1 / resolution)) * 0.3162162162;
+  color += sample(image, uv - (off1 / resolution)) * 0.3162162162;
+  color += sample(image, uv + (off2 / resolution)) * 0.0702702703;
+  color += sample(image, uv - (off2 / resolution)) * 0.0702702703;
+  return color;
+}
+
+float blur13 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
   float color = 0.0;
   vec2 off1 = vec2(1.411764705882353) * direction;
   vec2 off2 = vec2(3.2941176470588234) * direction;
@@ -42,14 +61,12 @@ float blur(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
 
 void main () {
   float v = vignette(vUv, resolution, vignetteMin, vignetteMax, vignetteScale);
-  float edgeBlur = mix(1.0, 2.0, v);
+  float edgeBlur = v + 1.0;
+  float finalColor = blur13(tDiffuse, vUv, resolution.xy, direction * edgeBlur);
 
-  float finalColor = blur(tDiffuse, vUv, resolution.xy, direction * edgeBlur);
-  gl_FragColor.rgb = vec3(finalColor);
-  gl_FragColor.a = 1.0;
-  #ifndef FLOAT_BUFFER
-    // finalColor = decodeFloat(texture2D(tDiffuse, vUv));
+  #ifdef FLOAT_BUFFER
+    gl_FragColor = vec4(vec3(finalColor), 1.0);
+  #else
     gl_FragColor = encodeFloat(finalColor);
   #endif
-  // gl_FragColor = texture2D(tDiffuse, vUv);
 }

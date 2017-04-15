@@ -50,29 +50,11 @@ varying vec3 vFogWorldPosition;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 
-#pragma glslify: encodeRGBM = require('./linear-to-rgbm.glsl');
 #pragma glslify: encodeFloat = require('./encode-float.glsl');
 
-float udBox( vec3 p, vec3 b )
-{
-  return length(max(abs(p)-b,0.0));
-}
+#pragma glslify: InScatter = require('./inscatter');
 
-float InScatter(vec3 start, vec3 dir, vec3 lightPos, float d) {
-  // http://blog.mmacklin.com/2010/06/10/faster-fog/
-  // calculate quadratic coefficients a,b,c
-  vec3 q = start - lightPos;
-  float b = dot(dir, q);
-  float c = dot(q, q);
-
-  // evaluate integral
-  float s = 1.0 / sqrt(c - b * b);
-  float l = s * (atan((d + b) * s) - atan(b * s));
-  return l;
-}
-
-
-void main() {
+void main2() {
 
   #include <clipping_planes_fragment>
 
@@ -131,4 +113,10 @@ void main() {
   #ifndef FLOAT_BUFFER
     gl_FragColor.rgba = encodeFloat(gl_FragColor.r);
   #endif
+}
+
+
+void main () {
+  main2();
+  //gl_FragColor = vec4(diffuse, opacity);
 }

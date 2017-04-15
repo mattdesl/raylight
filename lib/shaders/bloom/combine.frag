@@ -5,7 +5,7 @@ precision mediump float;
 // #define FILM_GRAIN
 #define VIGNETTE
 #define DUST_OVERLAY
-#define USE_LUT
+// #define USE_LUT
 // #define ALLOW_GRAYSCALE
 
 varying vec2 vUv;
@@ -229,32 +229,22 @@ void main () {
  
   gl_FragColor.rgb = mix(vec3(color1), vec3(color2), L);
   L = luma(gl_FragColor.rgb);
-  gl_FragColor.rgb += deband * 20.0 * smoothstep(0.0, 0.5, L);
+  gl_FragColor.rgb += deband * 40.0 * smoothstep(0.0, 0.5, L);
  
   #if defined(DUST_OVERLAY) && !defined(IS_MOBILE)
     vec2 bgUV = backgroundUV(vUv, resolution, dustMapResolution);
     vec4 dustOverlay = texture2D(dustMap, bgUV);
-    vec3 colorWithDust = screen(gl_FragColor.rgb, vec3(dustOverlay.a));
+    // vec3 colorWithDust = gl_FragColor.rgb + dustOverlay.r;
+    vec3 colorWithDust = screen(gl_FragColor.rgb, vec3(dustOverlay.r));
     float dustFactor = smoothstep(0.0, 0.3, luma(foreground.rgb));
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor);
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor * 0.75);
   #endif
+
   #if defined(USE_LUT) && !defined(IS_MOBILE)
     gl_FragColor.rgb = mix(gl_FragColor.rgb, lut(gl_FragColor, lookupMap).rgb, 0.5);
   #endif
-  // gl_FragColor.rgb = foreground.rgb;
-  // vec2 vigUV = vUv - 0.5;
-  // vigUV /= vignetteScale;
-  // vigUV.x *= resolution.x / resolution.y;
-  // float vigDist = length(vigUV);
-  // gl_FragColor.rgb = vec3(smoothstep(vignetteMin, vignetteMax, vigDist));
- 
- 
-  // #ifndef FLOAT_BUFFER
-  //   float test = decodeFloat(texture2D(tBloomDiffuse, vUv));
-  //   gl_FragColor = vec4(vec3(test), 1.0);
-  // #endif
- 
-  #ifdef GAMMA_OUTPUT
-    // gl_FragColor.rgb = pow(gl_FragColor.rgb, vec3(1.0 / GAMMA_OUTPUT));
+
+  #ifdef FLOAT_BUFFER
+    gl_FragColor.rgb = min(gl_FragColor.rgb, 1.0);
   #endif
 }
