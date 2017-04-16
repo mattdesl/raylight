@@ -11,6 +11,7 @@ const createApp = require('./lib/createApp');
 const createAudio = require('./lib/createAudio');
 const createLoop = require('raf-loop');
 const isIOS = require('./lib/util/isIOS');
+const lerp = require('lerp');
 
 const tweenr = require('tweenr');
 const tunnelTimeline = tweenr();
@@ -153,7 +154,9 @@ function start (audio) {
     dt = Math.min(30, dt);
     dt /= 1000;
     if (audio && !isIOS) {
+      audio.update();
       tunnel.audio = audio.signal();
+      tunnel.emission = lerp(0.25, 1.0, audio.amplitude());
     }
     components.forEach(c => {
       if (c.update) c.update(dt);

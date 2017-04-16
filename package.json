@@ -17,6 +17,7 @@
     "analyser-frequency-average": "^1.0.0",
     "array-shuffle": "^1.0.1",
     "babel-polyfill": "^6.23.0",
+    "circular-buffer": "^1.0.2",
     "convex-hull": "^1.0.3",
     "defined": "^1.0.0",
     "element-class": "^0.2.2",
