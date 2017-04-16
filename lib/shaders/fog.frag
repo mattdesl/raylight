@@ -5,8 +5,7 @@ uniform vec3 pointLightPosition;
 uniform float pointLightDiffuse;
 uniform float fogLightStrength;
 
-#pragma glslify: encodeRGBM = require('./linear-to-rgbm');
-#pragma glslify: encodeFloat = require('./encode-float');
+#pragma glslify: encodeHDR = require('./encode-hdr');
 #pragma glslify: InScatter = require('./inscatter');
 
 void main() {
@@ -22,9 +21,10 @@ void main() {
   float fogAmt = pointLightDiffuse * scatter * fogLightStrength;
   color += fogAmt;
 
-  #ifndef FLOAT_BUFFER
-    gl_FragColor = encodeFloat(color);
+  #ifdef FLOAT_BUFFER
+    // encode with zero depth
+    gl_FragColor = vec4(vec3(color, 0.0, 0.0), 1.0);
   #else
-    gl_FragColor = vec4(vec3(color), 1.0);
+    gl_FragColor = encodeHDR(color);
   #endif
 }

@@ -10,8 +10,8 @@ uniform float vignetteMax;
 uniform float vignetteStrength;
 uniform float vignetteScale;
 
-#pragma glslify: decodeFloat = require('../decode-float');
-#pragma glslify: encodeFloat = require('../encode-float');
+#pragma glslify: decodeHDR = require('../decode-hdr');
+#pragma glslify: encodeHDR = require('../encode-hdr');
 #pragma glslify: vignette = require('./vignette');
 #pragma glslify: luma = require('glsl-luma');
 
@@ -20,7 +20,7 @@ void main () {
   #ifdef FLOAT_BUFFER
     float color = texture2D(tDiffuse, vUv).r;
   #else
-    float color = decodeFloat(texture2D(tDiffuse, vUv));
+    float color = decodeHDR(texture2D(tDiffuse, vUv));
   #endif
 
   // threshold
@@ -33,6 +33,6 @@ void main () {
   #ifdef FLOAT_BUFFER
     gl_FragColor = vec4(vec3(outColor), 1.0);
   #else
-    gl_FragColor = encodeFloat(outColor);
+    gl_FragColor = encodeHDR(outColor);
   #endif
 }

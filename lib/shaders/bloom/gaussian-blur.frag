@@ -12,12 +12,12 @@ uniform float vignetteStrength;
 uniform float vignetteScale;
 
 #pragma glslify: vignette = require('./vignette');
-#pragma glslify: decodeFloat = require('../decode-float');
-#pragma glslify: encodeFloat = require('../encode-float');
+#pragma glslify: decodeHDR = require('../decode-hdr');
+#pragma glslify: encodeHDR = require('../encode-hdr');
 
 float sample (sampler2D image, vec2 uv) {
   #ifndef FLOAT_BUFFER
-    return decodeFloat(texture2D(image, uv));
+    return decodeHDR(texture2D(image, uv));
   #else
     return texture2D(image, uv).r;
   #endif
@@ -67,6 +67,6 @@ void main () {
   #ifdef FLOAT_BUFFER
     gl_FragColor = vec4(vec3(finalColor), 1.0);
   #else
-    gl_FragColor = encodeFloat(finalColor);
+    gl_FragColor = encodeHDR(finalColor);
   #endif
 }

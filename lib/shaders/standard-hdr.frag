@@ -50,7 +50,7 @@ varying vec3 vFogWorldPosition;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 
-#pragma glslify: encodeFloat = require('./encode-float.glsl');
+#pragma glslify: encodePixel = require('./encode-pixel');
 
 #pragma glslify: InScatter = require('./inscatter');
 
@@ -110,9 +110,8 @@ void main2() {
   #include <tonemapping_fragment>
   #include <encodings_fragment>
   #include <fog_fragment>
-  #ifndef FLOAT_BUFFER
-    gl_FragColor.rgba = encodeFloat(gl_FragColor.r);
-  #endif
+
+  gl_FragColor = encodePixel(gl_FragColor.r);
 }
 
 

@@ -14,12 +14,18 @@ uniform highp sampler2D tBloomDiffuse;
 uniform vec2 resolution;
 uniform vec3 color1;
 uniform vec3 color2;
+uniform float cameraFar;
+uniform float cameraNear;
 uniform vec2 dustMapResolution;
 uniform sampler2D dustMap;
 uniform sampler2D lookupMap;
 uniform float time;
 uniform float steps;
 uniform float animation;
+
+#ifdef INCLUDE_SSAO
+uniform highp sampler2D tSSAO;
+#endif
 
 #ifdef LENS_DISTORT
 uniform float lensDistort;
@@ -54,8 +60,8 @@ uniform float bloomOpacity;
 #pragma glslify: screen = require('glsl-blend/screen');
 #pragma glslify: backgroundUV = require('../glsl-background');
 #pragma glslify: rgbmToLinear = require('../rgbm-to-linear');
+#pragma glslify: decodeHDR = require('../decode-hdr');
 #pragma glslify: decodeFloat = require('../decode-float');
-#pragma glslify: encodeFloat = require('../encode-float');
 
 #pragma glslify: blendScreen = require(glsl-blend/screen)
 
@@ -107,7 +113,7 @@ float smootherstep(float edge0, float edge1, float x) {
 
 vec4 sample (sampler2D map, vec2 uv) {
   #ifndef FLOAT_BUFFER
-    float f = decodeFloat(texture2D(map, uv));
+    float f = decodeHDR(texture2D(map, uv));
     return vec4(f, f, f, 1.0);
   #else
     return texture2D(map, uv).rrra;
@@ -258,6 +264,11 @@ void main () {
     vec4 background = (sample(tDiffuse, texCoord));
   #endif
 
+  #ifdef INCLUDE_SSAO
+    float texDepth = texture2D(tSSAO, texCoord).r;
+    background.rgb *= texDepth;
+  #endif
+
   vec4 foreground = (sample(tBloomDiffuse, texCoord));
   vec2 cUv = vUv - 0.5;
   cUv.x *= resolution.x / resolution.y;
@@ -308,7 +319,7 @@ void main () {
     gl_FragColor.rgb = mix(gl_FragColor.rgb, lut(gl_FragColor, lookupMap).rgb, 0.5);
     // gl_FragColor.rgb = mix(gl_FragColor.rgb, effected, animation);
   #endif
-
+  // gl_FragColor.rgb = vec3(texDepth);
   #ifdef FLOAT_BUFFER
     gl_FragColor.rgb = min(gl_FragColor.rgb, 1.0);
   #endif
