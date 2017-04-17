@@ -156,7 +156,7 @@ function start (audio) {
     if (audio && !isIOS) {
       audio.update();
       tunnel.audio = audio.signal();
-      tunnel.emission = lerp(0.25, 1.0, audio.amplitude());
+      tunnel.emission = lerp(0.0, 1.0, audio.amplitude());
     }
     components.forEach(c => {
       if (c.update) c.update(dt);
