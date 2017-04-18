@@ -117,5 +117,5 @@ void main2() {
 
 void main () {
   main2();
-  //gl_FragColor = vec4(diffuse, opacity);
+  // gl_FragColor = vec4(diffuse, opacity);
 }

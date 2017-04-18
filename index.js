@@ -156,7 +156,7 @@ function start (audio) {
     if (audio && !isIOS) {
       audio.update();
       tunnel.audio = audio.signal();
-      tunnel.emission = lerp(0.0, 1.0, audio.amplitude());
+      tunnel.emission = lerp(0.5, 1.0, audio.amplitude());
     }
     components.forEach(c => {
       if (c.update) c.update(dt);
@@ -167,13 +167,11 @@ function start (audio) {
 
   // ugly code...
   function animateInContent () {
-    // const overlay = document.querySelector('.overlay');
     const header = document.querySelector('.header');
     const subheader = document.querySelector('.subheader');
     const update = () => {
       css(header, { opacity: headerTween.opacity });
       css(subheader, { opacity: subheaderTween.opacity });
-      // css(overlay, { opacity: overlayTween.opacity });
       if (soundcloudDiv) {
         css(soundcloudDiv, { opacity: subheaderTween.opacity * 1 });
       }
@@ -197,13 +195,11 @@ function start (audio) {
   }
 
   function animateOutContent () {
-    // const overlay = document.querySelector('.overlay');
     const header = document.querySelector('.header');
     const subheader = document.querySelector('.subheader');
     const update = () => {
       css(header, { opacity: headerTween.opacity });
       css(subheader, { opacity: subheaderTween.opacity });
-      // css(overlay, { opacity: overlayTween.opacity });
       if (soundcloudDiv) {
         css(soundcloudDiv, { opacity: subheaderTween.opacity * 1 });
       }

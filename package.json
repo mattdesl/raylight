@@ -79,7 +79,7 @@
     ]
   },
   "scripts": {
-    "start": "budo index.js:bundle.js --live --dir app -- -t babelify -t glslify",
+    "start": "budo index.js --serve bundle.js --live --dir app -- -t babelify -t glslify",
     "deploy:upload": "surge -p app -d raylight.surge.sh",
     "deploy": "npm run build && npm run deploy:upload",
     "build": "browserify index.js -t babelify -t glslify | uglifyjs -m -c warnings=false > app/bundle.js"

@@ -51,6 +51,7 @@ uniform float vignetteScale;
 
 #endif
 
+uniform float bloomMultiply;
 uniform float bloomOpacity;
 
 #pragma glslify: random = require('glsl-random');
@@ -170,7 +171,7 @@ vec2 kaleidoscope (vec2 uv, float n) {
 
   uv = vec2(cos(angle), sin(angle)) * radius;
   uv.x /= aspect;
-  uv.x *= skew * 1.0;
+  uv.x *= skew * 0.95;
   #ifdef IS_PORTRAIT
     uv *= mix(1.0, 1.5, animation);
   #else
@@ -269,7 +270,7 @@ void main () {
     background.rgb *= texDepth;
   #endif
 
-  vec4 foreground = (sample(tBloomDiffuse, texCoord));
+  vec3 foreground = sample(tBloomDiffuse, texCoord).rgb * bloomMultiply;
   vec2 cUv = vUv - 0.5;
   cUv.x *= resolution.x / resolution.y;
 
@@ -312,6 +313,9 @@ void main () {
     // vec3 colorWithDust = gl_FragColor.rgb + dustOverlay.r;
     vec3 colorWithDust = screen(gl_FragColor.rgb, vec3(dustOverlay.r));
     float dustFactor = smoothstep(0.0, 0.3, luma(foreground.rgb));
+    #ifdef VIGNETTE
+      dustFactor = mix(dustFactor * 0.75, dustFactor, v);
+    #endif
     gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor * 1.0);
   #endif
 
@@ -319,7 +323,6 @@ void main () {
     gl_FragColor.rgb = mix(gl_FragColor.rgb, lut(gl_FragColor, lookupMap).rgb, 0.5);
     // gl_FragColor.rgb = mix(gl_FragColor.rgb, effected, animation);
   #endif
-  // gl_FragColor.rgb = vec3(texDepth);
   #ifdef FLOAT_BUFFER
     gl_FragColor.rgb = min(gl_FragColor.rgb, 1.0);
   #endif
