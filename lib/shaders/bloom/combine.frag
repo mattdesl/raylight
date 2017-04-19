@@ -314,7 +314,7 @@ void main () {
     vec3 colorWithDust = screen(gl_FragColor.rgb, vec3(dustOverlay.r));
     float dustFactor = smoothstep(0.0, 0.3, luma(foreground.rgb));
     #ifdef VIGNETTE
-      dustFactor = mix(dustFactor * 0.75, dustFactor, v);
+      dustFactor = mix(dustFactor * 0.5, dustFactor, v);
     #endif
     gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor * 1.0);
   #endif
