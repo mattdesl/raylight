@@ -12,9 +12,9 @@ http://raylight.surge.sh/?highQuality
 
 #### Screenshots
 
-<img src="screenshots/2.jpg" width="75%" />  
-
 <img src="screenshots/1.jpg" width="75%" />  
+
+<img src="screenshots/2.jpg" width="75%" />  
 
 #### Credits
 
