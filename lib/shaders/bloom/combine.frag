@@ -5,7 +5,7 @@ precision mediump float;
 // #define FILM_GRAIN
 #define VIGNETTE
 #define DUST_OVERLAY
-// #define USE_LUT
+#define USE_LUT
 // #define ALLOW_GRAYSCALE
 
 varying vec2 vUv;
@@ -21,6 +21,7 @@ uniform sampler2D dustMap;
 uniform sampler2D lookupMap;
 uniform float time;
 uniform float steps;
+uniform float lutStrength;
 uniform float animation;
 
 #ifdef INCLUDE_SSAO
@@ -63,8 +64,6 @@ uniform float bloomOpacity;
 #pragma glslify: rgbmToLinear = require('../rgbm-to-linear');
 #pragma glslify: decodeHDR = require('../decode-hdr');
 #pragma glslify: decodeFloat = require('../decode-float');
-
-#pragma glslify: blendScreen = require(glsl-blend/screen)
 
 
 #define saturate(a) clamp( a, 0.0, 1.0 )
@@ -139,14 +138,14 @@ vec3 applyLensDistort (sampler2D map, vec2 uv, float distort, float k, float kCu
 
   // get the right pixel for the current position
   vec2 rCoords = (f * eta.r) * scale * (delta) + 0.5;
-  vec2 gCoords = (f * eta.g) * scale * (delta) + 0.5;
-  vec2 bCoords = (f * eta.b) * scale * (delta) + 0.5;
+  // vec2 gCoords = (f * eta.g) * scale * (delta) + 0.5;
+  // vec2 bCoords = (f * eta.b) * scale * (delta) + 0.5;
 
-  vec3 inputDistort = vec3(0.0); 
-  inputDistort.r = sample(map, rCoords).r;
-  inputDistort.g = sample(map, gCoords).g;
-  inputDistort.b = sample(map, bCoords).b;
-  return inputDistort;
+  // vec3 inputDistort = vec3(0.0); 
+  // inputDistort.r = sample(map, rCoords).g;
+  // inputDistort.g = sample(map, gCoords).g;
+  // inputDistort.b = sample(map, bCoords).b;
+  return sample(map, rCoords).rgb;
 }
 
 vec2 kaleidoscope (vec2 uv, float n) {
@@ -175,7 +174,7 @@ vec2 kaleidoscope (vec2 uv, float n) {
   #ifdef IS_PORTRAIT
     uv *= mix(1.0, 1.5, animation);
   #else
-    uv *= mix(1.25, 1.5, animation);
+    uv *= mix(1.35, 1.5, animation);
   #endif
   uv = uv * 0.5 + 0.5;
   return uv;
@@ -305,23 +304,22 @@ void main () {
  
   gl_FragColor.rgb = mix(vec3(color1), vec3(color2), L);
   L = luma(gl_FragColor.rgb);
-  gl_FragColor.rgb += deband * 40.0 * smoothstep(0.0, 0.5, L);
+  gl_FragColor.rgb += deband * 30.0 * smoothstep(0.0, 0.5, L);
  
   #if defined(DUST_OVERLAY) && !defined(IS_MOBILE)
     vec2 bgUV = backgroundUV(vUv, resolution, dustMapResolution);
     vec4 dustOverlay = texture2D(dustMap, bgUV);
     // vec3 colorWithDust = gl_FragColor.rgb + dustOverlay.r;
     vec3 colorWithDust = screen(gl_FragColor.rgb, vec3(dustOverlay.r));
-    float dustFactor = smoothstep(0.0, 0.3, luma(foreground.rgb));
+    float dustFactor = smoothstep(0.0, 0.5, L);
     #ifdef VIGNETTE
-      dustFactor = mix(dustFactor * 0.5, dustFactor, v);
+      dustFactor = mix(dustFactor * 0.35, dustFactor, v);
     #endif
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor * 1.0);
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor * 0.75);
   #endif
 
   #if defined(USE_LUT) && !defined(IS_MOBILE)
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, lut(gl_FragColor, lookupMap).rgb, 0.5);
-    // gl_FragColor.rgb = mix(gl_FragColor.rgb, effected, animation);
+    // gl_FragColor.rgb = mix(gl_FragColor.rgb, lut(gl_FragColor, lookupMap).rgb, lutStrength);
   #endif
   #ifdef FLOAT_BUFFER
     gl_FragColor.rgb = min(gl_FragColor.rgb, 1.0);

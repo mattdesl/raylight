@@ -12,6 +12,7 @@ const createAudio = require('./lib/createAudio');
 const createLoop = require('raf-loop');
 const isIOS = require('./lib/util/isIOS');
 const lerp = require('lerp');
+const clamp = require('clamp');
 
 const tweenr = require('tweenr');
 const tunnelTimeline = tweenr();
@@ -89,12 +90,13 @@ function start (audio) {
     });
     if (audio) {
       audioTimeline.cancel().to(audio, {
-        effect: 1,
+        highpass: 1,
         duration: 1,
         ease: 'quadOut'
       });
     }
   };
+
   const touchUp = (ev) => {
     if (typeof ev.button === 'number' && ev.button !== 0) {
       return;
@@ -117,7 +119,7 @@ function start (audio) {
     });
     if (audio) {
       audioTimeline.cancel().to(audio, {
-        effect: 0,
+        highpass: 0,
         duration: 1,
         ease: 'quadOut'
       });
@@ -130,12 +132,69 @@ function start (audio) {
 
   const skipFrames = query.skipFrames;
   let intervalTime = 0;
+  let midiEmission = 1;
 
   // no context menu on mobile...
   if (isMobile) canvas.oncontextmenu = () => false;
 
   if (query.renderOnce) tick(0);
   else createLoop(tick).start();
+
+  // request MIDI access
+  if (navigator.requestMIDIAccess) {
+    navigator.requestMIDIAccess({
+      sysex: false // this defaults to 'false' and we won't be covering sysex in this article. 
+    }).then(midi => {
+      const inputs = midi.inputs.values();
+      console.log('MIDI Inputs:', midi.inputs.size);
+      // loop over all available inputs and listen for any MIDI input
+      for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
+        // each time there is a midi message call the onMIDIMessage function
+        input.value.onmidimessage = (message) => {
+          const data = message.data;
+          if (!data || data.length !== 3) return;
+          const id = data[1];
+          const value = clamp(data[2] / 127, 0, 1);
+          onMIDI(id, value);
+        };
+      }
+    }, err => {
+      console.warn(err);
+    });
+  } else {
+    console.log('No MIDI supported.');
+  }
+
+  function onMIDI (id, value) {
+    console.log(`Hit MIDI ${id}`);
+    if (id >= 48) {
+      tunnel.toggleIdle(id - 48);
+      return;
+    }
+    switch (id) {
+      case 1:
+        if (audio) audio.highpass = value;
+        break;
+      case 2:
+        if (audio) audio.highpassCutoff = lerp(10, 7000, value);
+        break;
+      case 3:
+        if (audio) audio.lowpass = value;
+        break;
+      case 4:
+        if (audio) audio.lowpassCutoff = lerp(500, 20000, value);
+        break;
+      case 5:
+        tunnel.moveSpeed = lerp(0, 4, value);
+        break;
+      case 6:
+        midiEmission = lerp(0, 4, value);
+        break;
+      case 7:
+        app.getBloom().animation = value;
+        break;
+    }
+  }
 
   function addComponent (c) {
     components.push(c);
@@ -153,11 +212,13 @@ function start (audio) {
 
     dt = Math.min(30, dt);
     dt /= 1000;
+    tunnel.emission = 1;
     if (audio && !isIOS) {
       audio.update();
       tunnel.audio = audio.signal();
       tunnel.emission = lerp(0.5, 1.0, audio.amplitude());
     }
+    tunnel.emission *= midiEmission;
     components.forEach(c => {
       if (c.update) c.update(dt);
     });
@@ -220,5 +281,15 @@ function start (audio) {
       ease: 'quadOut'
     }).on('update', update);
   }
+
+  // midi functions
+  function onMIDISuccess(midiAccess) {
+    // when we get a succesful response, run this code
+    console.log('MIDI Access Object', midiAccess);
+  }
+
+  function onMIDIFailure(e) {
+    // when we get a failed response, run this code
+    console.log("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + e);
+  }
 }
-console.log(window.innerWidth, window.innerHeight)

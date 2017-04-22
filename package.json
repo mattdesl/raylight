@@ -45,6 +45,7 @@
     "new-array": "^1.0.0",
     "nice-color-palettes": "^1.0.1",
     "object-assign": "^4.1.0",
+    "omnitone": "^0.2.1",
     "orbit-controls": "^1.1.1",
     "query-string": "^4.2.3",
     "raf-loop": "^1.1.3",
