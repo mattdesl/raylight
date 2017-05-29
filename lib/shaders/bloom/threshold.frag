@@ -16,23 +16,14 @@ uniform float vignetteScale;
 #pragma glslify: luma = require('glsl-luma');
 
 void main () {
-  
-  #ifdef FLOAT_BUFFER
-    float color = texture2D(tDiffuse, vUv).r;
-  #else
-    float color = decodeHDR(texture2D(tDiffuse, vUv));
-  #endif
+  vec3 color = texture2D(tDiffuse, vUv).rgb;
 
   // threshold
-  float outColor = step(lumaThreshold, color);
+  vec3 outColor = step(vec3(lumaThreshold), color);
 
   // allow vignette to peek through
   float v = vignette(vUv, resolution, vignetteMin, vignetteMax, vignetteScale);
-  outColor = mix(outColor, min(3.0, color), v);
+  outColor = mix(outColor, clamp(color, 0.0, 3.0), v);
 
-  #ifdef FLOAT_BUFFER
-    gl_FragColor = vec4(vec3(outColor), 1.0);
-  #else
-    gl_FragColor = encodeHDR(outColor);
-  #endif
+  gl_FragColor = vec4(vec3(outColor), 1.0);
 }

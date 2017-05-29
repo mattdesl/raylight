@@ -15,16 +15,12 @@ uniform float vignetteScale;
 #pragma glslify: decodeHDR = require('../decode-hdr');
 #pragma glslify: encodeHDR = require('../encode-hdr');
 
-float sample (sampler2D image, vec2 uv) {
-  #ifndef FLOAT_BUFFER
-    return decodeHDR(texture2D(image, uv));
-  #else
-    return texture2D(image, uv).r;
-  #endif
+vec3 sample (sampler2D image, vec2 uv) {
+  return texture2D(image, uv).rgb;
 }
 
-float blur5 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
-  float color = 0.0;
+vec3 blur5 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
+  vec3 color = vec3(0.0);
   vec2 off1 = vec2(1.3333333333333333) * direction;
   color += sample(image, uv) * 0.29411764705882354;
   color += sample(image, uv + (off1 / resolution)) * 0.35294117647058826;
@@ -32,8 +28,8 @@ float blur5 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
   return color;
 }
 
-float blur9 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
-  float color = 0.0;
+vec3 blur9 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
+  vec3 color = vec3(0.0);
   vec2 off1 = vec2(1.3846153846) * direction;
   vec2 off2 = vec2(3.2307692308) * direction;
   color += sample(image, uv) * 0.2270270270;
@@ -44,8 +40,8 @@ float blur9 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
   return color;
 }
 
-float blur13 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
-  float color = 0.0;
+vec3 blur13 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
+  vec3 color = vec3(0.0);
   vec2 off1 = vec2(1.411764705882353) * direction;
   vec2 off2 = vec2(3.2941176470588234) * direction;
   vec2 off3 = vec2(5.176470588235294) * direction;
@@ -62,11 +58,7 @@ float blur13 (sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
 void main () {
   float v = vignette(vUv, resolution, vignetteMin, vignetteMax, vignetteScale);
   float edgeBlur = v + 1.0;
-  float finalColor = blur13(tDiffuse, vUv, resolution.xy, direction * edgeBlur);
+  vec3 finalColor = blur13(tDiffuse, vUv, resolution.xy, direction * edgeBlur);
 
-  #ifdef FLOAT_BUFFER
-    gl_FragColor = vec4(vec3(finalColor), 1.0);
-  #else
-    gl_FragColor = encodeHDR(finalColor);
-  #endif
+  gl_FragColor = vec4(finalColor, 1.0);
 }

@@ -110,8 +110,6 @@ void main2() {
   #include <tonemapping_fragment>
   #include <encodings_fragment>
   #include <fog_fragment>
-
-  gl_FragColor = encodePixel(gl_FragColor.r);
 }
 
 

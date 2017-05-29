@@ -1,7 +1,7 @@
 precision mediump float;
 
 #define LUT_FLIP_Y
-#define LENS_DISTORT
+// #define LENS_DISTORT
 // #define FILM_GRAIN
 #define VIGNETTE
 #define DUST_OVERLAY
@@ -112,12 +112,7 @@ float smootherstep(float edge0, float edge1, float x) {
 }
 
 vec4 sample (sampler2D map, vec2 uv) {
-  #ifndef FLOAT_BUFFER
-    float f = decodeHDR(texture2D(map, uv));
-    return vec4(f, f, f, 1.0);
-  #else
-    return texture2D(map, uv).rrra;
-  #endif
+  return texture2D(map, uv);
 }
 
 vec3 applyLensDistort (sampler2D map, vec2 uv, float distort, float k, float kCube, float scale) {
@@ -250,12 +245,6 @@ void main () {
   vec2 texCoord = vUv;
   // texCoord = backgroundUV(texCoord, resolution, vec2(911.0, 502.0));
   // float anim = sin(time) * 0.5 + 0.5;
-  vec2 modUV = kaleidoscope(texCoord, 3.0);
-  // vec2 modUV = kaleidoscope2(texCoord * 2.0 - 1.0, 3.0);
-  
-  // texCoord = modUV;
-  texCoord = modUV;
-  // texCoord = mix(modUV, texCoord, v);
 
   #ifdef LENS_DISTORT
     vec3 distortRGB = applyLensDistort(tDiffuse, texCoord, lensDistort, lensDistortK, lensDistortCubicK, lensDistortScale);
@@ -302,9 +291,9 @@ void main () {
   // gl_FragColor = background;
  
  
-  gl_FragColor.rgb = mix(vec3(color1), vec3(color2), L);
-  L = luma(gl_FragColor.rgb);
-  gl_FragColor.rgb += deband * 30.0 * smoothstep(0.0, 0.5, L);
+  // gl_FragColor.rgb = mix(vec3(color1), vec3(color2), L);
+  // L = luma(gl_FragColor.rgb);
+  gl_FragColor.rgb += deband * 20.0 * smoothstep(0.0, 0.5, L);
  
   #if defined(DUST_OVERLAY) && !defined(IS_MOBILE)
     vec2 bgUV = backgroundUV(vUv, resolution, dustMapResolution);
@@ -313,9 +302,9 @@ void main () {
     vec3 colorWithDust = screen(gl_FragColor.rgb, vec3(dustOverlay.r));
     float dustFactor = smoothstep(0.0, 0.5, L);
     #ifdef VIGNETTE
-      dustFactor = mix(dustFactor * 0.35, dustFactor, v);
+      dustFactor = mix(dustFactor * 0.5, dustFactor, v);
     #endif
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor * 0.75);
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, colorWithDust, dustFactor);
   #endif
 
   #if defined(USE_LUT) && !defined(IS_MOBILE)
