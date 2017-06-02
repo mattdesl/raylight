@@ -293,7 +293,7 @@ void main () {
  
   // gl_FragColor.rgb = mix(vec3(color1), vec3(color2), L);
   // L = luma(gl_FragColor.rgb);
-  gl_FragColor.rgb += deband * 20.0 * smoothstep(0.0, 0.5, L);
+  gl_FragColor.rgb += deband * 40.0 * smoothstep(0.0, 0.5, L);
  
   #if defined(DUST_OVERLAY) && !defined(IS_MOBILE)
     vec2 bgUV = backgroundUV(vUv, resolution, dustMapResolution);

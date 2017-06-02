@@ -29,7 +29,7 @@ function start () {
   });
 
   // const background = '#f2f2f2';
-  const background = '#fff';
+  const background = '#f9f9f9';
   document.body.style.background = background;
   app.renderer.setClearColor(background, 1);
   app.renderer.gammaOutput = false;
