@@ -28,8 +28,8 @@ function start () {
     alpha: true
   });
 
-  // const background = '#f2f2f2';
-  const background = '#f9f9f9';
+  // const background = '#f9f9f9';
+  const background = '#fff';
   document.body.style.background = background;
   app.renderer.setClearColor(background, 1);
   app.renderer.gammaOutput = false;
