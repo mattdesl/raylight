@@ -63,7 +63,7 @@ void main () {
   float v = vignette(vUv, resolution, vignetteMin, vignetteMax, vignetteScale);
   float edgeBlur = v + 1.0;
   float finalColor = blur13(tDiffuse, vUv, resolution.xy, direction * edgeBlur);
-
+  // float finalColor = sample(tDiffuse, vUv);
   #ifdef FLOAT_BUFFER
     gl_FragColor = vec4(vec3(finalColor), 1.0);
   #else

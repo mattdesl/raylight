@@ -18,6 +18,7 @@ const tweenr = require('tweenr');
 const tunnelTimeline = tweenr();
 const audioTimeline = tweenr();
 const uiTimeline = tweenr();
+const fadeTimeline = tweenr();
 
 console.log('Loading...');
 
@@ -133,6 +134,16 @@ function start (audio) {
   const skipFrames = query.skipFrames;
   let intervalTime = 0;
   let midiEmission = 1;
+  let time = 0;
+  let hasHitFirstNote = false;
+  let lowEnd = 0.0;
+  let highEnd = 0.5;
+  let slowFadeIn = { value: 0 };
+  fadeTimeline.to(slowFadeIn, { duration: 10, value: 1 })
+    .on('update', () => {
+      audio.lowpass = 1 - slowFadeIn.value;
+      app.camera.fov = lerp(120, 65, slowFadeIn.value);
+    });
 
   // no context menu on mobile...
   if (isMobile) canvas.oncontextmenu = () => false;
@@ -212,13 +223,20 @@ function start (audio) {
 
     dt = Math.min(30, dt);
     dt /= 1000;
+    time += dt;
     tunnel.emission = 1;
     if (audio && !isIOS) {
       audio.update();
       tunnel.audio = audio.signal();
-      tunnel.emission = lerp(0.5, 1.0, audio.amplitude());
+      tunnel.emission = lerp(lowEnd, highEnd, audio.amplitude());
+      const audioTime = audio.time();
+      if (audioTime >= 22.422 && !hasHitFirstNote) {
+        hasHitFirstNote = true;
+        lowEnd = 0.5;
+        highEnd = 1;
+      }
     }
-    tunnel.emission *= midiEmission;
+    tunnel.emission *= midiEmission * slowFadeIn.value;
     components.forEach(c => {
       if (c.update) c.update(dt);
     });
