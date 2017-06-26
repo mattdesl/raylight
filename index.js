@@ -63,8 +63,29 @@ function start (audio) {
   const overlayTween = { opacity: 1 };
   const components = [];
   const tunnel = addComponent(new FoggyScene(app));
+
+  let mouseTimer = null;
+  let isTouchDown = false;
   document.body.classList.remove('hide-cursor');
-  document.body.classList.add('grab');
+  const hideCursor = () => {
+    if (isTouchDown) return;
+    document.body.classList.remove('grab');
+    document.body.classList.add('hide-cursor');
+  };
+  const resetHideCursorTimer = () => {
+    if (mouseTimer) clearTimeout(mouseTimer);
+    mouseTimer = setTimeout(hideCursor, 1000);
+  };
+  const resetCursor = () => {
+    document.body.classList.remove('hide-cursor');
+    document.body.classList.add('grab');
+  };
+  window.addEventListener('mousemove', () => {
+    resetHideCursorTimer();
+    resetCursor();
+  });
+  hideCursor();
+
   canvas.style.visibility = '';
   content.style.visibility = '';
   animateInContent();
@@ -73,7 +94,9 @@ function start (audio) {
     if (typeof ev.button === 'number' && ev.button !== 0) {
       return;
     }
+    isTouchDown = true;
     ev.preventDefault();
+    resetCursor();
     document.body.classList.remove('grab');
     document.body.classList.add('grabbing');
     animateOutContent();
@@ -102,6 +125,8 @@ function start (audio) {
     if (typeof ev.button === 'number' && ev.button !== 0) {
       return;
     }
+    isTouchDown = false;
+    resetHideCursorTimer();
     animateInContent();
     ev.preventDefault();
     document.body.classList.remove('grabbing');
@@ -136,13 +161,14 @@ function start (audio) {
   let midiEmission = 1;
   let time = 0;
   let hasHitFirstNote = false;
-  let lowEnd = 0.0;
+  let lowEnd = 0.25;
   let highEnd = 0.5;
   let slowFadeIn = { value: 0 };
   fadeTimeline.to(slowFadeIn, { duration: 10, value: 1 })
     .on('update', () => {
-      audio.lowpass = 1 - slowFadeIn.value;
-      app.camera.fov = lerp(120, 65, slowFadeIn.value);
+      audio.highpass = 1 - slowFadeIn.value;
+      // audio.lowpass = 1 - slowFadeIn.value;
+      // app.camera.fov = lerp(120, 65, slowFadeIn.value);
     });
 
   // no context menu on mobile...
@@ -177,9 +203,9 @@ function start (audio) {
   }
 
   function onMIDI (id, value) {
-    console.log(`Hit MIDI ${id}`);
+    // console.log(`Hit MIDI ${id}`);
     if (id >= 48) {
-      tunnel.toggleIdle(id - 48);
+      // tunnel.toggleIdle(id - 48);
       return;
     }
     switch (id) {
@@ -203,6 +229,9 @@ function start (audio) {
         break;
       case 7:
         app.getBloom().animation = value;
+        break;
+      case 8:
+        app.camera.fov = lerp(40, 120, value);
         break;
     }
   }
